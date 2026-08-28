@@ -9,10 +9,14 @@ pipx install wiretop
 wiretop
 ```
 
-(or `uv tool install wiretop`). Not on PyPI yet — until then, install from
-source:
+(or `uv tool install wiretop`, or plain `pip install wiretop`). Published on
+[PyPI](https://pypi.org/project/wiretop/).
+
+To install from source instead:
 
 ```
+git clone https://github.com/chiloanerk/wiretop.git
+cd wiretop
 python3 -m venv .venv
 .venv/bin/pip install -e .
 .venv/bin/wiretop
