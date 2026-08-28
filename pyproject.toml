@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wiretop"
+version = "0.1.0"
+description = "A mactop-style dashboard for network usage on your Mac"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Rele Chiloane" },
+]
+dependencies = [
+    "textual>=8.0",
+]
+classifiers = [
+    "Environment :: Console :: Curses",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Topic :: System :: Networking :: Monitoring",
+]
+
+[project.urls]
+Homepage = "https://github.com/chiloanerk/wiretop"
+
+[project.scripts]
+wiretop = "wiretop:main"
+
+[tool.setuptools]
+py-modules = [
+    "wiretop",
+    "app",
+    "cards",
+    "render",
+    "netstats",
+    "procnames",
+    "nettop_source",
+    "interfaces",
+    "wifi",
+    "latency",
+    "destinations",
+    "history",
+]
