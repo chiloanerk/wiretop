@@ -12,18 +12,16 @@ import locale
 import sys
 
 from app import NetTopApp
-from netstats import SORT_MODES
 from nettop_source import NettopSource, NettopUnavailable, ReplaySource
-from render import build_summary
 
-MAX_TOP = 30
+MAX_TOP = 20
 
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--warmup", type=int, default=10,
                         help="seconds to measure before choosing the top programs")
-    parser.add_argument("--top", type=int, default=10,
+    parser.add_argument("--top", type=int, default=20,
                         help=f"how many programs to follow (max {MAX_TOP})")
     parser.add_argument("--replay", metavar="FILE",
                         help="play back captured nettop output instead of watching live")
@@ -51,10 +49,6 @@ def main(argv=None):
     except KeyboardInterrupt:
         return 0
 
-    sort_by, _ = SORT_MODES[app.sort_index]
-    rows = app.tracker.rows_for(app.top, sort_by=sort_by) if app.top else list(app.tracker.apps.values())
-    for line in build_summary(rows, app.tracker.seconds):
-        print(line)
     if app.problem is not None:
         print(f"\n{app.problem}", file=sys.stderr)
         return 1

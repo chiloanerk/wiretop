@@ -32,16 +32,19 @@ class LatencySource:
         self.history = deque(maxlen=history_length)
 
     def _run_ping(self):
+        # -t is ping's own exit timeout, not TTL, on macOS. subprocess's own
+        # timeout is a backstop in case ping itself ever doesn't honor it.
         result = subprocess.run(["ping", "-c", "1", "-t", "2", self._host],
-                                 capture_output=True, text=True)
+                                 capture_output=True, text=True, timeout=5)
         return result.stdout
 
     def poll(self):
         """This poll's round-trip time in ms (or None if unreachable), also
-        appended to `self.history` when reachable."""
+        appended to `self.history` when reachable. Never blocks for more
+        than a few seconds even if `ping` itself hangs."""
         try:
             rtt = parse_ping_summary(self._run())
-        except OSError:
+        except (OSError, subprocess.TimeoutExpired):
             rtt = None
         if rtt is not None:
             self.history.append(rtt)

@@ -157,16 +157,6 @@ def recent_speed_history(history, seconds):
     return list(history)[-seconds:]
 
 
-def bucketed_history(history, bucket_seconds, num_buckets):
-    """`history` downsampled into `num_buckets` consecutive sums, oldest
-    first. Buckets older than the session itself are 0."""
-    span = bucket_seconds * num_buckets
-    values = list(history)[-span:]
-    padded = [0] * (span - len(values)) + values
-    return [sum(padded[i * bucket_seconds:(i + 1) * bucket_seconds])
-            for i in range(num_buckets)]
-
-
 ANOMALY_MULTIPLIER = 3.0
 
 

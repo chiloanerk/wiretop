@@ -4,9 +4,9 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from netstats import (HOUR_SECONDS, AppStats, Tracker, bucketed_history,
-                      duration, format_megabytes, is_anomalous, mbps,
-                      megabytes, parse_sample, recent_speed_history)
+from netstats import (HOUR_SECONDS, AppStats, Tracker, duration,
+                      format_megabytes, is_anomalous, mbps, megabytes,
+                      parse_sample, recent_speed_history)
 from nettop_source import split_samples
 
 
@@ -164,16 +164,6 @@ class HistoryHelpersTest(unittest.TestCase):
         history = [1, 2, 3, 4, 5]
         self.assertEqual(recent_speed_history(history, 2), [4, 5])
         self.assertEqual(recent_speed_history(history, 10), [1, 2, 3, 4, 5])
-
-    def test_bucketed_history_sums_consecutive_chunks(self):
-        history = [1, 1, 1, 2, 2, 2]  # two buckets of 3 seconds each
-        self.assertEqual(bucketed_history(history, bucket_seconds=3, num_buckets=2), [3, 6])
-
-    def test_bucketed_history_pads_missing_data_with_zero(self):
-        history = [5, 5]  # a session younger than the requested window
-        self.assertEqual(bucketed_history(history, bucket_seconds=2, num_buckets=3),
-                         [0, 0, 10])
-
 
 class AnomalyTest(unittest.TestCase):
     def test_a_spike_far_above_its_own_average_is_anomalous(self):

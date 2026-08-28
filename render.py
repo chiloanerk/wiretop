@@ -4,7 +4,7 @@ Nothing here touches textual or a terminal, so it's all checked with plain
 string/data comparisons.
 """
 
-from netstats import duration, format_megabytes, mbps
+from netstats import duration, mbps
 
 # Fraction of the tracked rows that count as "high usage" and get a color
 # gradient; the rest stay plain. Rows must already be sorted by total_bytes.
@@ -60,14 +60,17 @@ def wifi_summary(signal):
     return "Wi-Fi: " + (" ".join(parts) if parts else "connected")
 
 
-def build_summary(rows, elapsed):
-    """A few plain lines to leave behind on the normal screen after quitting."""
-    lines = [f"Watched network activity for {duration(elapsed)}.", ""]
-    if not rows:
-        lines.append("No network activity was recorded.")
-        return lines
-    lines.append(f"{'Program':22}{'Total Used (MB)':>17}{'Time Sending':>15}")
-    for app in sorted(rows, key=lambda app: -app.total_bytes):
-        total = format_megabytes(app.total_bytes)
-        lines.append(f"{app.name[:22]:22}{total:>17}{duration(app.sending_seconds):>15}")
-    return lines
+def ticker_window(text, width, offset, gap="     "):
+    """A `width`-wide slice of `text`, scrolling continuously from `offset`
+    — a marquee effect for text too long to fit on one line. `gap` is the
+    seam shown as the text loops back to its start. Returns `text` unchanged
+    if it already fits."""
+    if not text or width <= 0:
+        return ""
+    loop = text + gap
+    if len(loop) <= width:
+        return text
+    repeats = width // len(loop) + 2
+    extended = loop * repeats
+    offset %= len(loop)
+    return extended[offset:offset + width]

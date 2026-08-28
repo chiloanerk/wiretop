@@ -6,8 +6,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from netstats import AppStats
 from procnames import ProcessNames, app_name
-from render import (breakdown_bars, build_summary, usage_levels,
-                    vitals_summary, wifi_summary)
+from render import (breakdown_bars, ticker_window, usage_levels, vitals_summary,
+                    wifi_summary)
 
 CHROME_HELPER = ("/Applications/Google Chrome.app/Contents/Frameworks/"
                  "Google Chrome Framework.framework/Versions/151.0.7922.175/"
@@ -144,16 +144,33 @@ class WifiSummaryTest(unittest.TestCase):
         self.assertIn("ch36 (5GHz)", line)
 
 
-class SummaryTest(unittest.TestCase):
-    def test_summary_lists_programs_by_total_used(self):
-        rows = [make_app("small", total=1_000_000), make_app("big", total=9_000_000)]
-        lines = build_summary(rows, 90)
-        self.assertIn("01:30", lines[0])
-        self.assertTrue(lines[3].startswith("big"))
-        self.assertTrue(lines[4].startswith("small"))
+class TickerWindowTest(unittest.TestCase):
+    def test_text_that_already_fits_is_returned_unchanged(self):
+        self.assertEqual(ticker_window("short", width=20, offset=5), "short")
 
-    def test_summary_copes_with_no_activity(self):
-        self.assertIn("No network activity", "\n".join(build_summary([], 5)))
+    def test_scrolls_by_offset(self):
+        text = "abcdefgh"
+        window = ticker_window(text, width=4, offset=0, gap="  ")
+        self.assertEqual(window, "abcd")
+        window = ticker_window(text, width=4, offset=2, gap="  ")
+        self.assertEqual(window, "cdef")
+
+    def test_wraps_around_through_the_gap(self):
+        # "abc" + "  " (gap) = "abc  ", looped: "abc  abc  ..."
+        window = ticker_window("abc", width=4, offset=4, gap="  ")
+        self.assertEqual(window, " abc")
+
+    def test_offset_wraps_around_the_loop_length(self):
+        text, gap = "abc", "  "
+        loop_length = len(text + gap)
+        self.assertEqual(ticker_window(text, 3, offset=1, gap=gap),
+                         ticker_window(text, 3, offset=1 + loop_length, gap=gap))
+
+    def test_empty_text_gives_empty_window(self):
+        self.assertEqual(ticker_window("", width=10, offset=0), "")
+
+    def test_zero_width_gives_empty_window(self):
+        self.assertEqual(ticker_window("hello", width=0, offset=0), "")
 
 
 if __name__ == "__main__":

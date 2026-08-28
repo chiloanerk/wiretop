@@ -26,8 +26,14 @@ def app_name(path):
 
 
 def read_process_table():
-    """{pid: executable path} for everything running right now."""
-    result = subprocess.run(["ps", "-axo", "pid=,comm="], capture_output=True, text=True)
+    """{pid: executable path} for everything running right now. This runs on
+    the main thread (via ProcessNames.sync), so it must never block for
+    long — a Python-level timeout backstops `ps` in case it ever hangs."""
+    try:
+        result = subprocess.run(["ps", "-axo", "pid=,comm="], capture_output=True,
+                                text=True, timeout=5)
+    except (OSError, subprocess.TimeoutExpired):
+        return {}
     table = {}
     for line in result.stdout.splitlines():
         pid, _, path = line.strip().partition(" ")

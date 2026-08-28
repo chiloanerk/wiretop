@@ -92,12 +92,16 @@ class InterfaceSource:
 
     @staticmethod
     def _run_netstat():
-        result = subprocess.run(["netstat", "-ib"], capture_output=True, text=True)
+        try:
+            result = subprocess.run(["netstat", "-ib"], capture_output=True, text=True, timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            return ""
         return result.stdout
 
     def poll(self):
         """{interface: (bytes_in, bytes_out, rate_in, rate_out)} — totals and
-        this poll's rate, in bytes/second-since-last-poll."""
+        this poll's rate, in bytes/second-since-last-poll. Never blocks for
+        more than a few seconds even if `netstat` itself hangs."""
         current = parse_netstat_ib(self._run())
         rates = {}
         for name, (bytes_in, bytes_out) in current.items():

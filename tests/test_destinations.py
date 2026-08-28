@@ -4,7 +4,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from destinations import group_by_app, parse_lsof_connections
+from destinations import DestinationSource, group_by_app, parse_lsof_connections
 
 # Real captured `lsof -i -P -n` output (trimmed).
 LSOF_SAMPLE = """\
@@ -46,6 +46,37 @@ class GroupByAppTest(unittest.TestCase):
     def test_apps_with_no_connections_are_left_out(self):
         grouped = group_by_app({}, {"quiet app": {1}})
         self.assertNotIn("quiet app", grouped)
+
+
+class ResolveHostnameTest(unittest.TestCase):
+    def test_resolves_via_the_injected_resolver(self):
+        source = DestinationSource(resolver=lambda ip: ("example.com", [], [ip]))
+        self.assertEqual(source.resolve_hostname("1.2.3.4"), "example.com")
+
+    def test_a_failed_lookup_falls_back_to_the_raw_ip(self):
+        def always_fails(ip):
+            raise OSError("no PTR record")
+
+        source = DestinationSource(resolver=always_fails)
+        self.assertEqual(source.resolve_hostname("1.2.3.4"), "1.2.3.4")
+
+    def test_repeat_lookups_are_cached(self):
+        calls = []
+
+        def counting_resolver(ip):
+            calls.append(ip)
+            return (f"host-{ip}", [], [ip])
+
+        source = DestinationSource(resolver=counting_resolver)
+        source.resolve_hostname("1.2.3.4")
+        source.resolve_hostname("1.2.3.4")
+        self.assertEqual(calls, ["1.2.3.4"])
+
+    def test_resolve_hosts_maps_every_ip_in_every_group(self):
+        source = DestinationSource(resolver=lambda ip: (f"host-{ip}", [], [ip]))
+        grouped = {"Chrome": ["1.1.1.1", "2.2.2.2"]}
+        self.assertEqual(source.resolve_hosts(grouped),
+                         {"Chrome": ["host-1.1.1.1", "host-2.2.2.2"]})
 
 
 if __name__ == "__main__":

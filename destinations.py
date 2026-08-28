@@ -6,7 +6,10 @@ traffic-volume column. The parsing here is pure; only DestinationSource
 shells out.
 """
 
+import socket
 import subprocess
+
+RESOLVE_TIMEOUT_SECONDS = 1.5
 
 
 def parse_lsof_connections(text):
@@ -48,14 +51,43 @@ class DestinationSource:
     """Polls `lsof -i -P -n` on its own timer (too heavy to run every
     second)."""
 
-    def __init__(self, run=None):
+    def __init__(self, run=None, resolver=None):
         self._run = run or self._run_lsof
+        self._resolver = resolver or socket.gethostbyaddr
+        self._hostname_cache = {}
 
     @staticmethod
     def _run_lsof():
-        result = subprocess.run(["lsof", "-i", "-P", "-n"], capture_output=True, text=True)
+        try:
+            result = subprocess.run(["lsof", "-i", "-P", "-n"], capture_output=True,
+                                    text=True, timeout=10)
+        except (OSError, subprocess.TimeoutExpired):
+            return ""
         return result.stdout
 
     def poll(self):
-        """{pid: [remote_host, ...]} — see parse_lsof_connections."""
+        """{pid: [remote_host, ...]} — see parse_lsof_connections. Never
+        blocks for more than a few seconds even if `lsof` itself hangs."""
         return parse_lsof_connections(self._run())
+
+    def resolve_hostname(self, ip):
+        """Best-effort reverse DNS for one IP, cached — a PTR record rarely
+        changes, and it saves re-resolving the same host every poll. Falls
+        back to the raw IP on any failure or timeout."""
+        if ip not in self._hostname_cache:
+            previous_timeout = socket.getdefaulttimeout()
+            socket.setdefaulttimeout(RESOLVE_TIMEOUT_SECONDS)
+            try:
+                hostname, _, _ = self._resolver(ip)
+            except OSError:
+                hostname = ip
+            finally:
+                socket.setdefaulttimeout(previous_timeout)
+            self._hostname_cache[ip] = hostname
+        return self._hostname_cache[ip]
+
+    def resolve_hosts(self, grouped):
+        """`grouped` from group_by_app: {app_name: [ip, ...]}. Returns the
+        same shape with each IP reverse-resolved where possible."""
+        return {name: [self.resolve_hostname(ip) for ip in ips]
+                for name, ips in grouped.items()}

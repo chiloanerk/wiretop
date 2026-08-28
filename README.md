@@ -19,7 +19,9 @@ python3 -m venv .venv
 ```
 
 Press `q` to quit, `s` to cycle how the Top Programs card is sorted, `k` to
-kill the selected program's processes (always asks for confirmation first).
+kill the selected program's processes (always asks for confirmation first),
+`t` to cycle color themes, `r` to cycle the refresh rate (1s/2s/5s). The
+status bar shows the active theme and refresh rate.
 
 Needs a real macOS terminal (`nettop`, `netstat`, `system_profiler`, `ping`,
 `lsof`) — no `sudo`.
@@ -31,7 +33,6 @@ Needs a real macOS terminal (`nettop`, `netstat`, `system_profiler`, `ping`,
 | **Live Throughput** | Aggregate down/up speed right now, and a sparkline of the last couple of minutes |
 | **Top Programs** | Per-program table: busy, down/up speed, total used, past-hour used, sending time. Sortable with `s`; the heaviest rows get a color gradient; a program spiking well above its own average is marked ⚠ |
 | **Usage Breakdown** | Each tracked program's share of the total, as a block-bar |
-| **Past Hour** | The same throughput history, downsampled into 5-minute buckets over the last hour |
 | **Interfaces** | Wi-Fi/Ethernet/VPN/Loopback totals and rates, from `netstat -ib` — separate from the per-process view |
 | **Latency** | Round-trip time to `1.1.1.1`, with a recent-history sparkline |
 | **Top Destinations** | Which remote hosts each tracked program currently has open connections to, from `lsof` |
@@ -45,7 +46,7 @@ glance, without taking up a grid slot.
 
 1. Reads network activity from macOS's `nettop`.
 2. Measures for 10 seconds to see how much data each program sends and
-   receives, then picks the heaviest users so far (up to 30 with `--top`).
+   receives, then picks the heaviest users so far (up to 20 with `--top`).
 3. Then goes live, updating once a second. The list is re-checked every
    second, so a program that turns heavy later — a video that starts playing
    after the 10-second warmup, say — can still push its way onto the list, in
