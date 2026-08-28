@@ -4,6 +4,8 @@ A `mactop`-style dashboard for network usage on your Mac: a grid of live
 cards — throughput graph, top programs, usage breakdown, interfaces, Wi-Fi
 signal, latency, and more — instead of one scrolling table.
 
+![wiretop demo](docs/demo.gif)
+
 ```
 pipx install wiretop
 wiretop
